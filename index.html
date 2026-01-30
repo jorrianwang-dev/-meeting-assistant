@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>会议运营助手</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f5f5f5;
+        color: rgb(102, 102, 102);
+      }
+      #app {
+        display: flex;
+        height: 100vh;
+      }
+      .sidebar {
+        width: 240px;
+        background: rgb(0, 45, 40);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        padding: 16px 12px;
+      }
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .app-logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: rgb(26, 77, 72);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+      .app-title {
+        font-weight: 600;
+      }
+      .current-meeting {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 12px;
+      }
+      .current-meeting-name {
+        font-weight: 600;
+      }
+      .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: auto;
+      }
+      .nav-item {
+        border: none;
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: transparent;
+        color: #fff;
+        text-align: left;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .nav-item.active {
+        background: rgb(26, 77, 72);
+      }
+      .sidebar-footer {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 12px;
+      }
+      .main {
+        flex: 1;
+        padding: 16px 24px;
+        overflow-y: auto;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .section-header h1 {
+        margin: 0;
+        font-size: 22px;
+        color: rgb(26, 77, 72);
+      }
+      .section-body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .empty-hint {
+        padding: 16px;
+        border-radius: 12px;
+        background: #fff7ea;
+        color: #8a6122;
+        border: 1px solid rgba(225, 184, 127, 0.7);
+      }
+      .card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 16px 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .form-group-inline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .form-group label {
+        font-size: 14px;
+      }
+      input[type="text"],
+      input[type="number"],
+      input[type="time"],
+      textarea,
+      select {
+        border-radius: 10px;
+        border: 1px solid rgb(204, 204, 204);
+        padding: 8px 10px;
+        font-size: 14px;
+        font-family: inherit;
+      }
+      textarea {
+        resize: vertical;
+      }
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .form-actions-left {
+        display: flex;
+        justify-content: flex-start;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .btn {
+        border-radius: 999px;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+      }
+      .btn.primary {
+        background: rgb(26, 77, 72);
+        color: #fff;
+      }
+      .btn.primary:hover {
+        background: rgb(0, 45, 40);
+      }
+      .btn.secondary {
+        background: #ffffff;
+        border: 1px solid rgb(204, 204, 204);
+        color: rgb(26, 77, 72);
+      }
+      .btn.secondary:hover {
+        background: #f2f2f2;
+      }
+      .btn.small {
+        padding: 4px 10px;
+        font-size: 13px;
+      }
+      .meeting-tabs {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .meeting-tab {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #ffffff;
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+      .meeting-tab-main {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .meeting-tab-name {
+        font-weight: 500;
+      }
+      .meeting-tab-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .meeting-tab button {
+        border-radius: 999px;
+        border: none;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .meeting-tab button.edit {
+        background: rgb(225, 184, 127);
+        color: #fff;
+      }
+      .meeting-tab button.delete {
+        background: #eee;
+      }
+      .meeting-tab.selected {
+        background: rgb(26, 77, 72);
+        color: #fff;
+      }
+      .meeting-tab.selected .meeting-tab-name {
+        color: #fff;
+      }
+      .meeting-tab.selected button.edit {
+        background: #fff;
+        color: rgb(26, 77, 72);
+      }
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .toggle {
+        position: relative;
+        width: 80px;
+        height: 32px;
+        border-radius: 999px;
+        border: none;
+        background: rgb(169, 169, 169);
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        color: #fff;
+        font-size: 13px;
+      }
+      .toggle.on {
+        background: rgb(26, 77, 72);
+      }
+      .toggle-thumb {
+        position: absolute;
+        top: 3px;
+        left: 4px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.2s ease;
+      }
+      .toggle.on .toggle-thumb {
+        transform: translateX(40px);
+      }
+      .toggle-label {
+        margin-left: auto;
+        margin-right: 6px;
+      }
+      .agenda-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .agenda-table-wrapper {
+        overflow-x: auto;
+      }
+      .agenda-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .agenda-table th,
+      .agenda-table td {
+        border-bottom: 1px solid #eee;
+        padding: 6px 8px;
+        text-align: left;
+      }
+      .agenda-table th {
+        background: #fafafa;
+      }
+      .agenda-row {
+        cursor: move;
+      }
+      .agenda-row.lunch {
+        background: #f4f4f4;
+      }
+      .drag-handle {
+        cursor: grab;
+        font-size: 16px;
+      }
+      .input-error {
+        border-color: #e57373;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+      }
+      .tab-button {
+        border-radius: 999px;
+        border: 1px solid rgb(204, 204, 204);
+        background: #fff;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .tab-button.active {
+        background: rgb(26, 77, 72);
+        color: #fff;
+        border-color: rgb(26, 77, 72);
+      }
+      .participants-list {
+        font-size: 14px;
+      }
+      .participants-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .participants-table th,
+      .participants-table td {
+        border-bottom: 1px solid #eee;
+        padding: 6px 8px;
+      }
+      .groups-container {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+      }
+      .group-column {
+        min-width: 180px;
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 8px;
+      }
+      .group-title {
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+      .leader-slot {
+        border-radius: 8px;
+        background: #fff;
+        border: 1px dashed rgb(204, 204, 204);
+        padding: 4px 6px;
+        margin-bottom: 6px;
+        font-size: 12px;
+      }
+      .leader-label {
+        font-weight: 500;
+        margin-right: 4px;
+      }
+      .leader-placeholder {
+        color: #999;
+      }
+      .leader-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .leader-remove {
+        border: none;
+        background: transparent;
+        color: #c00;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .group-members {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-height: 40px;
+      }
+      .member-card {
+        border-radius: 999px;
+        background: #fff;
+        padding: 4px 8px;
+        font-size: 13px;
+        cursor: grab;
+        border: 1px solid #ddd;
+      }
+      .group-column.drag-over {
+        outline: 2px dashed rgb(26, 77, 72);
+      }
+      .leader-slot.drag-over {
+        outline: 2px solid rgb(26, 77, 72);
+      }
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .check-list {
+        min-height: 40px;
+      }
+      .check-list li {
+        padding: 2px 0;
+      }
+      .output-card {
+        max-width: 960px;
+      }
+      .output-card h2 {
+        margin-top: 0;
+        margin-bottom: 8px;
+      }
+      .output-block {
+        margin-top: 12px;
+      }
+      .output-block h3 {
+        margin-bottom: 6px;
+      }
+      .output-part-block {
+        margin-top: 4px;
+      }
+      .output-part-block p {
+        margin: 2px 0;
+      }
+      .download-area {
+        margin-top: 12px;
+        font-size: 13px;
+      }
+      .download-link {
+        color: rgb(26, 77, 72);
+      }
+      .output-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 4px;
+        font-size: 13px;
+      }
+      .output-table th,
+      .output-table td {
+        border: 1px solid #e0e0e0;
+        padding: 6px 8px;
+        text-align: left;
+      }
+      .output-table th {
+        background: #fafafa;
+      }
+      .person-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        margin: 2px 4px 2px 0;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        color: #000000;
+      }
+      .person-chip + .person-chip::before {
+        content: "、";
+        margin-right: 2px;
+      }
+      .person-avatar {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: rgb(26, 77, 72);
+        color: #fff;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+      }
+
+      @media (max-width: 900px) {
+        #app {
+          flex-direction: column;
+        }
+        .sidebar {
+          width: 100%;
+          flex-direction: row;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .nav {
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+        .main {
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="app-logo">📋</div>
+          <div class="app-title">会议运营助手</div>
+        </div>
+        <div class="current-meeting">
+          当前会议：<span id="currentMeetingName" class="current-meeting-name">未选择</span>
+        </div>
+        <nav class="nav">
+          <button class="nav-item active" data-section="board">会议看板</button>
+          <button class="nav-item" data-section="location">会议地点</button>
+          <button class="nav-item" data-section="agenda">会议议程</button>
+          <button class="nav-item" data-section="participants">会议人员</button>
+          <button class="nav-item" data-section="output">信息输出</button>
+        </nav>
+        <div class="sidebar-footer"><small>本地存储版本</small></div>
+      </aside>
+
+      <main class="main">
+        <!-- 会议看板 -->
+        <section class="section" id="section-board">
+          <header class="section-header">
+            <h1>会议看板</h1>
+            <button id="btnAddMeeting" class="btn primary">+ 新建会议</button>
+          </header>
+          <div id="boardEmptyHint" class="empty-hint">目前还没有会议,请点击右上角「新建会议」。</div>
+          <div class="meeting-tabs" id="meetingTabs"></div>
+        </section>
+
+        <!-- 会议地点 -->
+        <section class="section" id="section-location" hidden>
+          <header class="section-header">
+            <h1>会议地点</h1>
+          </header>
+          <div class="section-body">
+            <div id="locationNoMeeting" class="empty-hint" hidden>请先在「会议看板」中创建并选择一个会议。</div>
+            <div id="locationForm" class="card" hidden>
+              <div class="form-group">
+                <label for="inputAddress">会议地址</label>
+                <textarea
+                  id="inputAddress"
+                  rows="3"
+                  placeholder="请输入会议具体地址，例如：雁栖湖 XX 会议中心 1 号楼 301 室"
+                ></textarea>
+              </div>
+              <div class="form-group toggle-row">
+                <div>是否已拉会议摆台工单？</div>
+                <button id="toggleWorkOrder" class="toggle">
+                  <span class="toggle-thumb"></span>
+                  <span id="toggleWorkOrderLabel" class="toggle-label">没有</span>
+                </button>
+              </div>
+              <div class="form-actions">
+                <button id="btnLocationSave" class="btn secondary">保存</button>
+                <button id="btnLocationNext" class="btn primary">下一步：会议议程</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 会议议程 -->
+        <section class="section" id="section-agenda" hidden>
+          <header class="section-header">
+            <h1>会议议程</h1>
+          </header>
+          <div class="section-body">
+            <div id="agendaNoMeeting" class="empty-hint" hidden>请先在「会议看板」中创建并选择一个会议。</div>
+            <div id="agendaForm" hidden>
+              <div class="card">
+                <div class="form-group-inline">
+                  <label for="inputStartTime">会议开始时间（24 小时制）：</label>
+                  <input id="inputStartTime" type="time" />
+                </div>
+              </div>
+              <div class="card">
+                <div class="agenda-header-row">
+                  <div>议程列表</div>
+                  <button id="btnAddAgendaItem" class="btn secondary small">+ 添加一行</button>
+                </div>
+                <div class="agenda-table-wrapper">
+                  <table class="agenda-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 40px;"></th>
+                        <th>类型</th>
+                        <th>议程</th>
+                        <th>负责人</th>
+                        <th>时长（分钟）</th>
+                        <th>时间</th>
+                        <th style="width: 40px;">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="agendaTbody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button id="btnAgendaSave" class="btn secondary">保存</button>
+                <button id="btnAgendaNext" class="btn primary">下一步：会议人员</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 会议人员 -->
+        <section class="section" id="section-participants" hidden>
+          <header class="section-header">
+            <h1>会议人员</h1>
+          </header>
+          <div class="section-body">
+            <div id="participantsNoMeeting" class="empty-hint" hidden>请先在「会议看板」中创建并选择一个会议。</div>
+            <div id="participantsContent" hidden>
+              <div class="tabs">
+                <button class="tab-button active" data-part-tab="grouping">会议名单分组</button>
+                <button class="tab-button" data-part-tab="check">人员检测</button>
+              </div>
+              <!-- 分组 -->
+              <div id="tabGrouping" class="tab-panel">
+                <div class="card">
+                  <div class="form-group-inline" style="align-items: flex-start;">
+                    <label for="inputParticipantName">人员姓名</label>
+                    <textarea
+                      id="inputParticipantName"
+                      rows="3"
+                      style="flex: 1;"
+                      placeholder="可粘贴多个姓名，以顿号、逗号、空格、@ 或换行分隔"
+                    ></textarea>
+                  </div>
+                  <div class="form-group-inline">
+                    <label for="inputParticipantDept">部门</label>
+                    <input id="inputParticipantDept" type="text" placeholder="请输入部门" />
+                  </div>
+                  <div class="form-actions-left">
+                    <button id="btnAddParticipant" class="btn primary small">加入</button>
+                  </div>
+                </div>
+                <div class="card">
+                  <h3>人员名单（可直接修改部门和姓名）</h3>
+                  <div id="participantsList" class="participants-list"></div>
+                </div>
+                <div class="card">
+                  <div class="form-group-inline">
+                    <label for="inputGroupCount">分几组？</label>
+                    <input id="inputGroupCount" type="number" min="1" max="100" value="4" />
+                    <button id="btnAutoGroup" class="btn secondary small">一键分组</button>
+                    <button id="btnSaveGroups" class="btn primary small">保存分组</button>
+                  </div>
+                  <div id="groupsContainer" class="groups-container"></div>
+                </div>
+                <div class="form-actions">
+                  <button id="btnParticipantsSave" class="btn secondary">保存</button>
+                  <button id="btnParticipantsNext" class="btn primary">下一步：信息输出</button>
+                </div>
+              </div>
+              <!-- 人员检测 -->
+              <div id="tabCheck" class="tab-panel" hidden>
+                <div class="card">
+                  <div class="form-group">
+                    <label for="textareaCheck">请粘贴当前现场的人员名单（每行一个姓名，空行会自动忽略）：</label>
+                    <textarea id="textareaCheck" rows="8"></textarea>
+                  </div>
+                  <div class="form-actions-left">
+                    <button id="btnCheck" class="btn primary small">一键检测</button>
+                  </div>
+                </div>
+                <div class="card two-column">
+                  <div>
+                    <h3>漏掉人员</h3>
+                    <ul id="missingList" class="check-list"></ul>
+                  </div>
+                  <div>
+                    <h3>多余人员</h3>
+                    <ul id="extraList" class="check-list"></ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 信息输出 -->
+        <section class="section" id="section-output" hidden>
+          <header class="section-header">
+            <h1>信息输出</h1>
+          </header>
+          <div class="section-body">
+            <div id="outputNoMeeting" class="empty-hint" hidden>请先在「会议看板」中创建并选择一个会议。</div>
+            <div id="outputContent" hidden>
+              <div id="outputCard" class="card output-card">
+                <h2 id="outMeetingName">会议名称</h2>
+                <section class="output-block">
+                  <h3>📍 会议地点</h3>
+                  <p id="outLocationText"></p>
+                </section>
+                <section class="output-block">
+                  <h3>📅 会议议程</h3>
+                  <table class="agenda-table output-agenda-table">
+                    <thead>
+                      <tr>
+                        <th>类型</th>
+                        <th>议程</th>
+                        <th>负责人</th>
+                        <th>时长（分钟）</th>
+                        <th>时间</th>
+                      </tr>
+                    </thead>
+                    <tbody id="outAgendaTbody"></tbody>
+                  </table>
+                </section>
+                <section class="output-block">
+                  <h3>👥 人员名单</h3>
+                  <div id="outParticipantsByDept" class="output-part-block"></div>
+                </section>
+                <section class="output-block">
+                  <h3>📌 人员分组</h3>
+                  <div id="outGroups" class="output-part-block"></div>
+                </section>
+              </div>
+              <div class="form-actions">
+                <button id="btnCopyText" class="btn secondary">复制全文</button>
+                <button id="btnExportImage" class="btn primary">一键图片分享</button>
+              </div>
+              <div id="downloadArea" class="download-area"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
